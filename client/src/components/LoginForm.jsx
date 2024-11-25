@@ -3,9 +3,10 @@ import Input from '../customComponents/Input';
 import Button from '../customComponents/Button';
 import { useDispatch, useSelector } from 'react-redux';
 import { clearError, loginUser, registerUser } from '../features/auth/auth.slice';
+import axios from 'axios';
 
 const LoginForm = () => {
-  const { error } = useSelector((state) => state.auth); 
+  const { error } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const [formData, setFormData] = useState({
     email: '',
@@ -24,17 +25,26 @@ const LoginForm = () => {
   };
 
   useEffect(() => {
-    if (error) {
-      const fieldErrors = {};
-      error.forEach(({ message, field }) => {
-        fieldErrors[field] = message; 
-      });
-      console.log(fieldErrors)
-      setErrors((prevErrors) => ({ ...prevErrors, ...fieldErrors })); 
+    // if (error) {
+    //   const fieldErrors = {};
+    //   error.forEach(({ message, field }) => {
+    //     fieldErrors[field] = message; 
+    //   });
+    //   console.log(fieldErrors)
+    //   setErrors((prevErrors) => ({ ...prevErrors, ...fieldErrors })); 
+    // }
+    // return () => {
+    //   dispatch(clearError()); 
+    // };
+    const acc = async () => {
+      try {
+        const responce = await axios.get("http://localhost:5000/api/auth/me")
+        console.log(responce.data)
+      } catch (error) {
+        console.log(error)
+      }
     }
-    return () => {
-      dispatch(clearError()); 
-    };
+    acc()
   }, [error]);
 
   const validateForm = () => {

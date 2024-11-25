@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const User = require('../models/User');
 const sendEmail = require('../utils/sendEmail');
 const { validateInput } = require('../utils/validateInput');
+const  generateToken  = require('../utils/generateToken');
 
 
 
@@ -11,7 +12,35 @@ const sendErrorResponse = (res, statusCode, errors) => {
 };
 
 
+const getMe = async (req, res) => {
+  // console.log("hii");
+  try {
+    // Fetch user data from the database using req.user._id
+    const responce = await User.findOne({ _id: req.user._id }).select("-password");
 
+    if (!responce) {
+      // Return immediately after sending the response to avoid further execution
+      return res.status(400).json({ success: false, error: "User not found" });
+    }
+
+    // Respond with the user data
+    res.status(200).json({ success: true, responce });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, error: "Internal server error" });
+  }
+};
+
+
+
+const authLogout =  async(req, res) => {
+  try {
+      res.cookie("jwt","",{maxAge:0})
+      res.status(200).json({success:true,message:"logout successfully"})
+  } catch (error) {
+      res.status(500).json({ success: true, error: "internal server error" })
+  }
+}
 
 
 
@@ -57,6 +86,7 @@ const register = async (req, res) => {
 
 const login = async (req, res) => {
   const { email, password } = req.body;
+  console.log(email,password)
 
  
   const validationErrors = validateInput({ email, password });
@@ -79,11 +109,11 @@ const login = async (req, res) => {
       ]);
     }
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1d' });
+  
+     generateToken(user._id,res)
 
     return res.status(200).json({
       message: 'Login successful',
-      token,
       user: {
         id: user._id,
         username: user.username,
@@ -149,9 +179,6 @@ const verifyOtpAndChangePassword = async (req, res) => {
     if (Date.now() > user.resetOtpExpiry) {
       return res.status(400).json({ message: 'OTP has expired' });
     }
-
-    // const hashedPassword = await bcrypt.hash(newPassword, 10);
-
     user.password = newPassword;
     user.resetOtp = undefined;
     user.resetOtpExpiry = undefined;
@@ -165,4 +192,4 @@ const verifyOtpAndChangePassword = async (req, res) => {
 };
 
 
-module.exports = { register, login, requestPasswordReset,verifyOtpAndChangePassword };
+module.exports = {getMe,authLogout, register, login, requestPasswordReset,verifyOtpAndChangePassword };
